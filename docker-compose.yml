@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  bot-app:
+    image: python:3.11-slim
+    container_name: wechat_brain
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./data:/app/data
+    command: >
+      sh -c "pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple && 
+             python -m app.main"
+    ports:
+      - "8000:8000"
+    networks:
+      - wechat_net
+    restart: always
+
+  gewechat:
+    # 请确保这个镜像地址有效，或者去 GeWeChat 官方找最新的
+    image: registry.cn-hangzhou.aliyuncs.com/gewe/gewe:latest
+    container_name: gewechat_service
+    volumes:
+      - ./data/gewe_data:/root/temp
+      # 挂载共享目录，方便 bot 传语音文件给 gewe
+      - ./data/temp_audio:/root/temp_audio
+    ports:
+      - "2531:2531"
+      - "2532:2532"
+    environment:
+      - DOCKER_MODE=1
+    networks:
+      - wechat_net
+    restart: always
+
+networks:
+  wechat_net:
+    driver: bridge
